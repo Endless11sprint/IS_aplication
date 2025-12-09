@@ -1,0 +1,13 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    ports:
+      - "5173:5173"            # хост:контейнер
+    volumes:
+      - .:/app                 # код хоста внутрь контейнера
+      - /app/node_modules      # анонимный том, чтобы не затирать node_modules
+    environment:
+      - WATCHPACK_POLLING=true

@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Сущность User
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
+model Device {
+  id       String  @id @default(cuid())
+  name     String 
+}
+model Auditory {
+  id       String  @id @default(cuid())
+  name     String 
+}
+model Booking{
+  id      String @id @default(cuid())
+  id_device   String
+  id_auditory
+
+}
