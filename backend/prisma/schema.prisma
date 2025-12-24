@@ -26,6 +26,5 @@ model Auditory {
 model Booking{
   id      String @id @default(cuid())
   id_device   String
-  id_auditory
-
+  id_auditory String
 }

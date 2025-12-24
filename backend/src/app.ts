@@ -7,7 +7,7 @@ import { STATUS_CODES } from 'node:http'
 import prismaPlugin from './plugins/prisma.js'
 import { Type as T } from 'typebox'
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import { ValidationProblem, ProblemDetails, User, Health } from './types.js'
+import { ValidationProblem, ProblemDetails, User, Health, Device, CreateDevice } from './types.js'
 
 // Этот модуль собирает все настройки Fastify: плагины инфраструктуры, обработчики ошибок и маршруты API.
 
@@ -220,6 +220,78 @@ export async function buildApp() {
       reply.type('application/json').send(app.swagger())
     }
   )
+  /**
+ * POST /api/devices — добавление нового устройства
+ */
+app.post(
+  '/api/devices',
+  {
+    schema: {
+      operationId: 'createDevice',
+      tags: ['Devices'],
+      summary: 'Создать устройство',
+      description: 'Добавляет новое устройство в базу данных',
+      body: CreateDevice,
+      response: {
+        201: {
+          description: 'Устройство создано',
+          content: {
+            'application/json': { schema: Device }
+          }
+        },
+        400: {
+          description: 'Validation error',
+          content: {
+            'application/problem+json': { schema: ProblemDetails }
+          }
+        },
+        429: {
+          description: 'Too Many Requests',
+          content: {
+            'application/problem+json': { schema: ProblemDetails }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          content: {
+            'application/problem+json': { schema: ProblemDetails }
+          }
+        }
+      }
+    }
+  },
+  async (req, reply) => {
+    const { name } = req.body
+
+    const device = await app.prisma.device.create({
+      data: { name }
+    })
+
+    reply.code(201)
+    return device
+  }
+)
+app.get('/api/devices', async () => {
+  return app.prisma.device.findMany()
+})
+
+app.put('/api/devices/:id', async (req, reply) => {
+  const { id } = req.params as { id: string }
+  const { name } = req.body as { name: string }
+
+  return app.prisma.device.update({
+    where: { id },
+    data: { name }
+  })
+})
+
+app.delete('/api/devices/:id', async (req, reply) => {
+  const { id } = req.params as { id: string }
+
+  await app.prisma.device.delete({ where: { id } })
+  reply.code(204).send()
+})
 
   return app
 }
+

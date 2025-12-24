@@ -81,6 +81,11 @@ export const User = T.Object({
 })
 export type User = Static<typeof User>
 
+export const Device = T.Object({
+  id: T.String(),
+  name: T.String({ minLength: 1 }),
+})
+export type Device = Static<typeof Device>
 // Минимальная схема для health-check запроса: позволяет внешним сервисам понять, что backend жив.
 export const Health = T.Object({
   ok: T.Boolean({
@@ -88,3 +93,13 @@ export const Health = T.Object({
   })
 })
 export type Health = Static<typeof Health>
+
+
+
+export const CreateDevice = T.Object({
+  name: T.String({ minLength: 1 })
+})
+export type CreateDevice = Static<typeof CreateDevice>
+
+
+
