@@ -43,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build -- --base=/IS_aplication/
+        run: npm run build -- --base=IS_aplication
 
       - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
