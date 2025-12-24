@@ -48,7 +48,7 @@ jobs:
       - name: Upload artifact for Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/dist   # каталог с собранным проектом
+          path: frontend/dist   # каталог с собранным проект
 
   deploy:
     needs: build
