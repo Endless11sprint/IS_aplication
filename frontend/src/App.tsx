@@ -25,8 +25,14 @@ function App() {
   const [newName, setNewName] = useState("")
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
+  let API: string  = "http://localhost/api/devices"
+  if(import.meta.env.PROD)
+  {
+    API = "http://https://is-aplication.onrender.com//api/devices"
 
-  const API = "http://localhost/api/devices"
+
+  }
+  
 
   const loadDevices = async () => {
     const res = await fetch(API)
