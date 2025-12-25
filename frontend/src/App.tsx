@@ -28,7 +28,7 @@ function App() {
   let API: string  = "http://localhost/api/devices"
   if(import.meta.env.PROD)
   {
-    API = "https://is-aplication.onrender.com//api/devices"
+    API = "https://is-aplication.onrender.com/api/devices"
 
 
   }
