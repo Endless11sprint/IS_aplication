@@ -13,6 +13,9 @@ import {
 } from "@mui/material";
 import { Edit, Delete, Save, Close } from "@mui/icons-material";
 import { Header } from './components/Header';
+import cors from 'cors';
+const server = express();
+server.use(cors());
 
 type Device = {
   id: string
