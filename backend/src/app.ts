@@ -30,9 +30,7 @@ export async function buildApp() {
   // === Инфраструктурные плагины ===
 
   // Helmet добавляет безопасные HTTP-заголовки (Content-Security-Policy, X-DNS-Prefetch-Control и др.).
-  await app.register(helmet, {
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' // false в dev → нет CSP
-})
+  await app.register(helmet)
 
   await app.register(cors, {
   origin: true,
