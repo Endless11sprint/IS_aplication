@@ -8,7 +8,6 @@ import prismaPlugin from './plugins/prisma.js'
 import { Type as T } from 'typebox'
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { ValidationProblem, ProblemDetails, User, Health, Device, CreateDevice } from './types.js'
-//import cors from 'cors-ts'
 
 // Этот модуль собирает все настройки Fastify: плагины инфраструктуры, обработчики ошибок и маршруты API.
 
