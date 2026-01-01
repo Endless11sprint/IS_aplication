@@ -8,6 +8,7 @@ import prismaPlugin from './plugins/prisma.js'
 import { Type as T } from 'typebox'
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { ValidationProblem, ProblemDetails, User, Health, Device, CreateDevice } from './types.js'
+//import cors from 'cors-ts'
 
 // Этот модуль собирает все настройки Fastify: плагины инфраструктуры, обработчики ошибок и маршруты API.
 
@@ -34,7 +35,7 @@ export async function buildApp() {
   await app.register(helmet)
 
   // CORS ограничивает кросс-доменные запросы. Здесь полностью запрещаем их (origin: false) по умолчанию.
-  await app.register(cors, { origin: false })
+  await app.register(cors, { origin: true})
 
   /**
    * Ограничитель количества запросов на IP.
