@@ -47,7 +47,12 @@ function App() {
   const [editBookingOpen, setEditBookingOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
 
-  const API = "http://localhost/api"
+   let API: string  = "http://localhost/api/devices"
+  if(import.meta.env.PROD)
+  {
+
+    API = "https://is-aplication.onrender.com/api/devices"
+  }
 
   const loadData = async () => {
     try {
