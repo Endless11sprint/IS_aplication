@@ -21,7 +21,8 @@ model Device {
 }
 model Auditory {
   id       String  @id @default(cuid())
-  name     String 
+  name     String
+  capacity  Int
 }
 model Booking{
   id      String @id @default(cuid())
