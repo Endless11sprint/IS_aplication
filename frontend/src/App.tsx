@@ -1,201 +1,176 @@
 import { useEffect, useState } from 'react'
 import {
-  Container,
-  Box,
-  TextField,
-  Button,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  IconButton,
-  Typography,
-  Divider
+  Container, Box, TextField, Button, Table, TableHead, TableRow, 
+  TableCell, TableBody, IconButton, Typography, MenuItem, Paper, Divider
 } from "@mui/material";
-import { Edit, Delete, Save, Close } from "@mui/icons-material";
+import { Delete, Add } from "@mui/icons-material";
 import { Header } from './components/Header';
 
-type Device = { id: string; name: string }
-type Auditory = { id: string; name: string; capacity: number }
+interface Device {
+  id: string;
+  name: string;
+}
+
+interface Auditory {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
+interface Booking {
+  id: string;
+  deviceId: string;
+  auditoryId: string;
+  endTime: string;
+  device?: Device;
+  auditory?: Auditory;
+}
 
 function App() {
   const [active, setActive] = useState("catalog")
-  
-  // States for Devices
   const [devices, setDevices] = useState<Device[]>([])
-  const [newDevName, setNewDevName] = useState("")
-  const [editDevId, setEditDevId] = useState<string | null>(null)
-  const [editDevName, setEditDevName] = useState("")
-
-  // States for Auditories
   const [auditories, setAuditories] = useState<Auditory[]>([])
-  const [newAudName, setNewAudName] = useState("")
-  const [newAudCapacity, setNewAudCapacity] = useState<number | "">("")
-  const [editAudId, setEditAudId] = useState<string | null>(null)
-  const [editAudName, setEditAudName] = useState("")
-  const [editAudCapacity, setEditAudCapacity] = useState<number | "">("")
+  const [bookings, setBookings] = useState<Booking[]>([])
 
-  const BASE_URL = import.meta.env.PROD 
-    ? "https://is-aplication.onrender.com/api" 
-    : "http://localhost/api"
+  const [bookingForm, setBookingForm] = useState({ devId: "", audId: "", end: "" })
+  const [newDevName, setNewDevName] = useState("")
+  const [newAud, setNewAud] = useState({ name: "", cap: 1 })
+
+  const API = "http://localhost/api"
 
   const loadData = async () => {
-    const [devRes, audRes] = await Promise.all([
-      fetch(`${BASE_URL}/devices`),
-      fetch(`${BASE_URL}/auditories`)
-    ])
-    setDevices(await devRes.json())
-    setAuditories(await audRes.json())
+    try {
+      const [d, a, b] = await Promise.all([
+        fetch(`${API}/devices`).then(r => r.json()),
+        fetch(`${API}/auditories`).then(r => r.json()),
+        fetch(`${API}/bookings`).then(r => r.json())
+      ])
+      setDevices(d); setAuditories(a); setBookings(b)
+    } catch (e) { console.error(e) }
   }
 
   useEffect(() => { loadData() }, [])
 
-  // --- Device Actions ---
-  const createDevice = async () => {
-    if (!newDevName.trim()) return
-    const res = await fetch(`${BASE_URL}/devices`, {
+  // Логика бронирования
+  const handleBooking = async () => {
+    try {
+      const res = await fetch(`${API}/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          deviceId: bookingForm.devId, 
+          auditoryId: bookingForm.audId, 
+          endTime: new Date(bookingForm.end).toISOString() 
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || "Ошибка")
+      setBookings([data, ...bookings])
+      setBookingForm({ devId: "", audId: "", end: "" })
+    } catch (e: any) { alert(e.message) }
+  }
+
+  // Создание Устройства
+  const addDevice = async () => {
+    await fetch(`${API}/devices`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newDevName })
     })
-    setDevices([...devices, await res.json()])
-    setNewDevName("")
+    setNewDevName(""); loadData()
   }
 
-  const deleteDevice = async (id: string) => {
-    await fetch(`${BASE_URL}/devices/${id}`, { method: "DELETE" })
-    setDevices(devices.filter(d => d.id !== id))
-  }
-
-  const saveDevEdit = async (id: string) => {
-    const res = await fetch(`${BASE_URL}/devices/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editDevName })
-    })
-    const updated = await res.json()
-    setDevices(devices.map(d => d.id === id ? updated : d))
-    setEditDevId(null)
-  }
-
-  // --- Auditory Actions ---
-  const createAuditory = async () => {
-    if (!newAudName.trim()) return
-    const res = await fetch(`${BASE_URL}/auditories`, {
+  // Создание Аудитории
+  const addAuditory = async () => {
+    await fetch(`${API}/auditories`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newAudName, capacity: Number(newAudCapacity) || 0 })
+      body: JSON.stringify({ name: newAud.name, capacity: Number(newAud.cap) })
     })
-    setAuditories([...auditories, await res.json()])
-    setNewAudName(""); setNewAudCapacity("")
+    setNewAud({ name: "", cap: 1 }); loadData()
   }
 
-  const deleteAuditory = async (id: string) => {
-    await fetch(`${BASE_URL}/auditories/${id}`, { method: "DELETE" })
-    setAuditories(auditories.filter(a => a.id !== id))
+  const deleteItem = async (path: string, id: string) => {
+    await fetch(`${API}/${path}/${id}`, { method: "DELETE" })
+    loadData()
   }
 
-  const saveAudEdit = async (id: string) => {
-    const res = await fetch(`${BASE_URL}/auditories/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editAudName, capacity: Number(editAudCapacity) })
-    })
-    const updated = await res.json()
-    setAuditories(auditories.map(a => a.id === id ? updated : a))
-    setEditAudId(null)
+  const checkStatus = (audId: string) => {
+    const activeB = bookings.find(b => b.auditoryId === audId && new Date(b.endTime) > new Date())
+    return activeB ? { msg: `Занята до ${new Date(activeB.endTime).toLocaleTimeString()}`, busy: true } : { msg: "Свободна", busy: false }
   }
 
   return (
     <>
       <Header activeNavId={active} onNavigate={setActive} onBellClick={() => {}} />
-
       <Container maxWidth="lg" sx={{ py: 4 }}>
         
-        {/* DEVICES SECTION */}
-        <Typography variant="h5" gutterBottom>Устройства</Typography>
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <TextField label="Название устройства" value={newDevName} onChange={e => setNewDevName(e.target.value)} fullWidth />
-          <Button variant="contained" onClick={createDevice}>Добавить</Button>
-        </Box>
-        <Table sx={{ mb: 6 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell width="30%">ID</TableCell>
-              <TableCell>Название</TableCell>
-              <TableCell align="right">Действия</TableCell>
-            </TableRow>
-          </TableHead>
+        {/* Секция бронирования */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>Бронирование</Typography>
+        <Paper sx={{ p: 3, mb: 4, display: 'flex', gap: 2, alignItems: 'center', bgcolor: '#f5f5f5' }}>
+          <TextField select label="Устройство" value={bookingForm.devId} onChange={e => setBookingForm({...bookingForm, devId: e.target.value})} sx={{ flex: 1 }}>
+            {devices.map(d => <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>)}
+          </TextField>
+          <TextField select label="Аудитория" value={bookingForm.audId} onChange={e => setBookingForm({...bookingForm, audId: e.target.value})} sx={{ flex: 1 }}>
+            {auditories.map(a => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
+          </TextField>
+          <TextField type="datetime-local" label="До" InputLabelProps={{ shrink: true }} value={bookingForm.end} onChange={e => setBookingForm({...bookingForm, end: e.target.value})} sx={{ flex: 1 }} />
+          <Button variant="contained" onClick={handleBooking} size="large">Занять</Button>
+        </Paper>
+
+        {/* Таблица Аудиторий */}
+        <Typography variant="h6" gutterBottom>Статус аудиторий</Typography>
+        <Table sx={{ mb: 4 }}>
+          <TableHead><TableRow><TableCell>Название</TableCell><TableCell>Мест</TableCell><TableCell>Текущее состояние</TableCell><TableCell align="right">Удалить</TableCell></TableRow></TableHead>
           <TableBody>
-            {devices.map(device => (
-              <TableRow key={device.id}>
-                <TableCell>{device.id}</TableCell>
-                <TableCell>
-                  {editDevId === device.id ? 
-                    <TextField size="small" value={editDevName} onChange={e => setEditDevName(e.target.value)} fullWidth /> : 
-                    device.name}
-                </TableCell>
-                <TableCell align="right">
-                  {editDevId === device.id ? (
-                    <><IconButton onClick={() => saveDevEdit(device.id)} color="primary"><Save /></IconButton>
-                      <IconButton onClick={() => setEditDevId(null)}><Close /></IconButton></>
-                  ) : (
-                    <><IconButton onClick={() => { setEditDevId(device.id); setEditDevName(device.name); }}><Edit /></IconButton>
-                      <IconButton onClick={() => deleteDevice(device.id)} color="error"><Delete /></IconButton></>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
+            {auditories.map(a => {
+              const s = checkStatus(a.id)
+              return (
+                <TableRow key={a.id}>
+                  <TableCell>{a.name}</TableCell><TableCell>{a.capacity}</TableCell>
+                  <TableCell sx={{ color: s.busy ? 'error.main' : 'success.main', fontWeight: 'bold' }}>{s.msg}</TableCell>
+                  <TableCell align="right"><IconButton onClick={() => deleteItem('auditories', a.id)} color="error"><Delete /></IconButton></TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
 
         <Divider sx={{ my: 4 }} />
 
-        {/* AUDITORIES SECTION */}
-        <Typography variant="h5" gutterBottom>Аудитории</Typography>
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <TextField label="Название" value={newAudName} onChange={e => setNewAudName(e.target.value)} fullWidth />
-          <TextField label="Вместимость" type="number" value={newAudCapacity} onChange={e => setNewAudCapacity(e.target.value === "" ? "" : Number(e.target.value))} />
-          <Button variant="contained" color="success" onClick={createAuditory}>Добавить</Button>
+        {/* Админ-панель: быстрое добавление */}
+        <Box sx={{ display: 'flex', gap: 4, mb: 4 }}>
+          <Paper sx={{ p: 2, flex: 1 }}>
+            <Typography variant="subtitle1" gutterBottom>Добавить устройство</Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField size="small" fullWidth placeholder="Название" value={newDevName} onChange={e => setNewDevName(e.target.value)} />
+              <Button variant="outlined" onClick={addDevice}><Add /></Button>
+            </Box>
+          </Paper>
+          <Paper sx={{ p: 2, flex: 1 }}>
+            <Typography variant="subtitle1" gutterBottom>Добавить аудиторию</Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <TextField size="small" placeholder="Имя" value={newAud.name} onChange={e => setNewAud({...newAud, name: e.target.value})} />
+              <TextField size="small" type="number" placeholder="Мест" value={newAud.cap} onChange={e => setNewAud({...newAud, cap: Number(e.target.value)})} sx={{ width: 80 }} />
+              <Button variant="outlined" onClick={addAuditory}><Add /></Button>
+            </Box>
+          </Paper>
         </Box>
+
+        {/* Журнал бронирований */}
+        <Typography variant="h6" gutterBottom>Журнал</Typography>
         <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell width="30%">ID</TableCell>
-              <TableCell>Название</TableCell>
-              <TableCell>Вместимость</TableCell>
-              <TableCell align="right">Действия</TableCell>
-            </TableRow>
-          </TableHead>
+          <TableHead><TableRow><TableCell>Устройство</TableCell><TableCell>Аудитория</TableCell><TableCell>Окончание</TableCell><TableCell align="right">Действие</TableCell></TableRow></TableHead>
           <TableBody>
-            {auditories.map(aud => (
-              <TableRow key={aud.id}>
-                <TableCell>{aud.id}</TableCell>
-                <TableCell>
-                  {editAudId === aud.id ? 
-                    <TextField size="small" value={editAudName} onChange={e => setEditAudName(e.target.value)} fullWidth /> : 
-                    aud.name}
-                </TableCell>
-                <TableCell>
-                  {editAudId === aud.id ? 
-                    <TextField size="small" type="number" value={editAudCapacity} onChange={e => setEditAudCapacity(Number(e.target.value))} /> : 
-                    aud.capacity}
-                </TableCell>
-                <TableCell align="right">
-                  {editAudId === aud.id ? (
-                    <><IconButton onClick={() => saveAudEdit(aud.id)} color="primary"><Save /></IconButton>
-                      <IconButton onClick={() => setEditAudId(null)}><Close /></IconButton></>
-                  ) : (
-                    <><IconButton onClick={() => { setEditAudId(aud.id); setEditAudName(aud.name); setEditAudCapacity(aud.capacity); }}><Edit /></IconButton>
-                      <IconButton onClick={() => deleteAuditory(aud.id)} color="error"><Delete /></IconButton></>
-                  )}
-                </TableCell>
+            {bookings.map(b => (
+              <TableRow key={b.id}>
+                <TableCell>{b.device?.name}</TableCell><TableCell>{b.auditory?.name}</TableCell>
+                <TableCell>{new Date(b.endTime).toLocaleString()}</TableCell>
+                <TableCell align="right"><IconButton onClick={() => deleteItem('bookings', b.id)} color="error"><Delete /></IconButton></TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-
       </Container>
     </>
   )

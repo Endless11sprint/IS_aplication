@@ -8,24 +8,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Сущность User
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
   createdAt DateTime @default(now())
 }
+
 model Device {
-  id       String  @id @default(cuid())
-  name     String 
-}
-model Auditory {
-  id       String  @id @default(cuid())
+  id       String    @id @default(cuid())
   name     String
-  capacity  Int
+  bookings Booking[]
 }
-model Booking{
-  id      String @id @default(cuid())
-  id_device   String
-  id_auditory String
+
+model Auditory {
+  id       String    @id @default(cuid())
+  name     String
+  capacity Int
+  bookings Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  deviceId   String
+  device     Device   @relation(fields: [deviceId], references: [id])
+  auditoryId String
+  auditory   Auditory @relation(fields: [auditoryId], references: [id])
+  startTime  DateTime @default(now())
+  endTime    DateTime
 }
