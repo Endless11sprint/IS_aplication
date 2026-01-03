@@ -20,7 +20,11 @@ export async function buildApp() {
   }).withTypeProvider<TypeBoxTypeProvider>()
 
   await app.register(helmet)
-  await app.register(cors, { origin: true })
+  await app.register(cors, {
+  origin: true,
+  methods: '*',
+  allowedHeaders: ['*'],
+})
   await app.register(prismaPlugin)
 
   // --- DEVICES ---
