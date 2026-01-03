@@ -7,7 +7,10 @@ import {
   ValidationProblem, 
   CreateDeviceSchema, 
   CreateAuditorySchema, 
-  CreateBookingSchema 
+  CreateBookingSchema,
+  UpdateDeviceSchema,
+  UpdateAuditorySchema,
+  UpdateBookingSchema 
 } from './types.js'
 
 export async function buildApp() {
@@ -28,6 +31,12 @@ export async function buildApp() {
     return reply.code(201).send(device)
   })
 
+  app.put('/api/devices/:id', { schema: { body: UpdateDeviceSchema } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const updated = await app.prisma.device.update({ where: { id }, data: req.body })
+    return updated
+  })
+
   app.delete('/api/devices/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
     await app.prisma.device.delete({ where: { id } })
@@ -40,6 +49,12 @@ export async function buildApp() {
   app.post('/api/auditories', { schema: { body: CreateAuditorySchema } }, async (req, reply) => {
     const auditory = await app.prisma.auditory.create({ data: req.body })
     return reply.code(201).send(auditory)
+  })
+
+  app.put('/api/auditories/:id', { schema: { body: UpdateAuditorySchema } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const updated = await app.prisma.auditory.update({ where: { id }, data: req.body })
+    return updated
   })
 
   app.delete('/api/auditories/:id', async (req, reply) => {
@@ -84,6 +99,57 @@ export async function buildApp() {
       include: { device: true, auditory: true }
     })
     return reply.code(201).send(booking)
+  })
+
+  app.put('/api/bookings/:id', { schema: { body: UpdateBookingSchema } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const { deviceId, auditoryId, endTime } = req.body
+    const now = new Date()
+    let newEndAt: Date | undefined
+    if (endTime) {
+      newEndAt = new Date(endTime)
+      if (newEndAt <= now) {
+        return reply.code(400).send({ detail: 'Время окончания должно быть в будущем' })
+      }
+    }
+
+    const booking = await app.prisma.booking.findUnique({
+      where: { id },
+      include: { device: true, auditory: true }
+    })
+    if (!booking) {
+      return reply.code(404).send({ detail: 'Бронирование не найдено' })
+    }
+
+    const targetAuditoryId = auditoryId || booking.auditoryId
+    const targetEndAt = newEndAt || booking.endTime
+
+    if (auditoryId || endTime) {
+      const conflicting = await app.prisma.booking.findFirst({
+        where: {
+          auditoryId: targetAuditoryId,
+          endTime: { gt: now },
+          id: { not: id }
+        }
+      })
+      if (conflicting) {
+        return reply.code(409).send({ 
+          detail: `Аудитория занята до ${conflicting.endTime.toLocaleTimeString()}` 
+        })
+      }
+    }
+
+    const data: any = {}
+    if (deviceId) data.deviceId = deviceId
+    if (auditoryId) data.auditoryId = auditoryId
+    if (newEndAt) data.endTime = newEndAt
+
+    const updated = await app.prisma.booking.update({
+      where: { id },
+      data,
+      include: { device: true, auditory: true }
+    })
+    return updated
   })
 
   app.delete('/api/bookings/:id', async (req, reply) => {

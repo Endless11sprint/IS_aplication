@@ -24,6 +24,9 @@ export const DeviceSchema = T.Object({
 export const CreateDeviceSchema = T.Object({
   name: T.String({ minLength: 1 })
 })
+export const UpdateDeviceSchema = T.Object({
+  name: T.Optional(T.String({ minLength: 1 }))
+})
 
 // Схемы для аудиторий
 export const AuditorySchema = T.Object({
@@ -34,6 +37,10 @@ export const AuditorySchema = T.Object({
 export const CreateAuditorySchema = T.Object({
   name: T.String({ minLength: 1 }),
   capacity: T.Integer({ minimum: 1 })
+})
+export const UpdateAuditorySchema = T.Object({
+  name: T.Optional(T.String({ minLength: 1 })),
+  capacity: T.Optional(T.Integer({ minimum: 1 }))
 })
 
 // Схемы для бронирования
@@ -50,6 +57,11 @@ export const CreateBookingSchema = T.Object({
   deviceId: T.String(),
   auditoryId: T.String(),
   endTime: T.String()
+})
+export const UpdateBookingSchema = T.Object({
+  deviceId: T.Optional(T.String()),
+  auditoryId: T.Optional(T.String()),
+  endTime: T.Optional(T.String())
 })
 
 export type Device = Static<typeof DeviceSchema>
